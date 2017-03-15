@@ -13,9 +13,9 @@ def main():
     while 1:
         try:
             f.processinput()
-        except (Exception, KeyboardInterrupt) as e:
+        except:
             f.destroy()
-            raise e
+            raise
 
 class FlowGraphManager():
     def __init__(self):
@@ -23,7 +23,7 @@ class FlowGraphManager():
         self.r.start()
         self.r.loaded.acquire()
         if self.r.failure:
-            raise IOError("FlowGraphManager couldn't initialize data reporter")
+            raise IOError("FlowGraphManager couldn't initialize DataReporter")
         self.topblock = None
 
     def processinput(self):
@@ -70,11 +70,11 @@ class DataReporter(threading.Thread):
             self.s = socket(AF_INET, SOCK_STREAM)
             self.s.connect(self.target)
             print("DataReporter connected to {0}:{1}".format(*self.target))
-        except Exception as e:
+        except:
             print("DataReporter failed connecting to {0}:{1}\n"
                     "HELPFUL HINT: try nc -lp {1}".format(*self.target))
             self.failure = True
-            raise e
+            raise
         finally:
             self.loaded.release()
         while 1:
@@ -85,9 +85,9 @@ class DataReporter(threading.Thread):
             self._checkmsg(msg)
             try:
                 self.s.send(msg + "\n")
-            except Exception as e:
+            except:
                 self.failure = True
-                raise e
+                raise
 
     def stop(self):
         self.q.put(self._StopReporter())
