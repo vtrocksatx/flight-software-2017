@@ -9,28 +9,51 @@ from socket import socket, SOCK_STREAM, AF_INET
 from Queue import Queue
 
 def main():
-    r = DataReporter()
-    r.start()
-    r.loaded.acquire()
-    if r.failure:
-        exit(-1)
+    f = FlowGraphManager()
     while 1:
+        try:
+            f.processinput()
+        except (Exception, KeyboardInterrupt) as e:
+            f.destroy()
+            raise e
+
+class FlowGraphManager():
+    def __init__(self):
+        self.r = DataReporter()
+        self.r.start()
+        self.r.loaded.acquire()
+        if self.r.failure:
+            raise IOError("FlowGraphManager couldn't initialize data reporter")
+        self.topblock = None
+
+    def processinput(self):
         cmd = raw_input("PLD>> ").strip()
+        self.r.checkfailure()
         if cmd == "start":
-            t = TopBlockThread(r) # TODO add adsb/ais switch
-            t.start()
+            self.start()
         elif cmd == "stop":
-            t.stop()
-            t.join()
+            self.stop()
         elif cmd in ["quit", "exit"]:
-            try:
-                r.stop()
-                t.stop()
-            finally:
-                exit(0)
+            self.destroy()
+            exit(0)
         else:
             print("unrecognized command: '{}'".format(cmd))
 
+    def start(self):
+        self.stop()
+        self.topblock = TopBlockThread(self.r) # TODO add adsb/ais switch
+        self.topblock.start()
+
+    def stop(self):
+        if not self.topblock:
+            return
+        self.topblock.stop()
+        self.topblock.join()
+        self.topblock = None
+
+    def destroy(self):
+        self.stop()
+        self.r.stop()
 
 class DataReporter(threading.Thread):
     class _StopReporter(): pass # reporter shutdown token class
@@ -56,25 +79,33 @@ class DataReporter(threading.Thread):
             self.loaded.release()
         while 1:
             msg = self.q.get()
-            if isinstance(msg, self._StopReporter):
+            if self.failure or isinstance(msg, self._StopReporter):
                 self.s.close()
                 break
             self._checkmsg(msg)
-            self.s.send(self.q.get() + "\n")
+            try:
+                self.s.send(msg + "\n")
+            except Exception as e:
+                self.failure = True
+                raise e
 
     def stop(self):
         self.q.put(self._StopReporter())
 
     def send(self, msg):
+        self.checkfailure()
         self._checkmsg(msg)
         self.q.put(msg)
+
+    def checkfailure(self):
+        if self.failure:
+            raise IOError("DataReporter failure has occurred")
 
     def _checkmsg(self, msg):
         if not isinstance(msg, str):
             raise ValueError("only send strings")
         if "\n" in msg:
             raise NotImplementedError("crappy encapsulation in use; no newlines please")
-
 
 class TopBlockThread(threading.Thread):
 
@@ -84,13 +115,15 @@ class TopBlockThread(threading.Thread):
 
     def run(self):
         self.p = subprocess.Popen("./top_block.py",stdout=subprocess.PIPE)
-        while 1:
-            line = self.p.stdout.readline()
-            if not line: # process finished
-                self.p.terminate()
-                break
-            msg = "ADS-B RX {}".format(line.strip()[1:-1])
-            self.r.send(msg)
+        try:
+            while 1:
+                line = self.p.stdout.readline()
+                if not line: # process finished
+                    break
+                msg = "ADS-B RX {}".format(line.strip()[1:-1])
+                self.r.send(msg)
+        finally:
+            self.stop()
 
     def stop(self):
         self.p.terminate()
