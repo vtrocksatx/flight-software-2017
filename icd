@@ -1,0 +1,28 @@
+bits in downlink packet (2048 total)
+16: DL pkid
+16: UL pkid
+-- byte boundary
+2: packet type
+
+
+PACKET TYPES:
+bits 00: ADSB
+bits 01: AIS
+bits 10: Telemetry
+bits 11: Flavor of the month
+
+ADSB:
+6: message count
+-- byte boundary
+32: bitmap for message lengths (0=56,1=112)
+{56,112}*count: messages
+<padding out to 252 bytes>
+
+AIS:
+TBD
+
+Telemetry:
+(Zach)
+
+Flavor of the month:
+?????
