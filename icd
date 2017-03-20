@@ -1,7 +1,10 @@
+command radio: 10.01.10.01/24
+payload radio: 10.01.10.10/24
+
 bits in downlink packet (2048 total)
 16: DL pkid
 16: UL pkid
--- byte boundary
+-- byte boundary (start of data sent to cmd radio via UDP, port 1337)
 2: packet type
 
 
@@ -9,20 +12,20 @@ PACKET TYPES:
 bits 00: ADSB
 bits 01: AIS
 bits 10: Telemetry
-bits 11: Flavor of the month
+bits 11: Flavor of the week
 
-ADSB:
+00: ADSB
 6: message count
 -- byte boundary
 32: bitmap for message lengths (0=56,1=112)
 {56,112}*count: messages
 <padding out to 252 bytes>
 
-AIS:
+01: AIS
 TBD
 
-Telemetry:
+10: Telemetry
 (Zach)
 
-Flavor of the month:
+11: Flavor of the week
 ?????

@@ -77,6 +77,7 @@ class DataReporter(threading.Thread):
             raise
         finally:
             self.loaded.release()
+
         while 1:
             msg = self.q.get()
             if self.failure or isinstance(msg, self._StopReporter):
