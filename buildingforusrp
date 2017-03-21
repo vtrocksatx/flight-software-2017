@@ -1,0 +1,28 @@
+First do this (skip "Preparation from Source" section including subsections):
+https://kb.ettus.com/Software_Development_on_the_E310_and_E312#Preparation_using_PyBOMBS
+Don't worry about "Compiling and 
+
+Remember to always run the following before compiling anything:
+source ~/prefix/setup_env.sh
+source ~/prefix/environment-setup-armv7ahf-vfp-neon-oe-linux-gnueabi
+
+For ADSB:
+cd ~/prefix/src
+git clone https://github.com/bistromath/gr-air-modes.git
+mkdir gr-air-modes/build
+cd gr-air-modes/build
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_E300=ON ..
+make -j4
+make install DESTDIR=~/prefix
+rsync ~/prefix ...
+
+To talk to the USRP via ethernet:
+sudo ip link set enp0s25 up
+sudo ip addr add 10.101.10.1/24 dev enp0s25
+sudo systemctl start dnsmasq
+ssh root@10.101.10.11
+And in reverse:
+sudo systemctl stop dnsmasq
+sudo ip addr del 10.101.10.1/24
+sudo ip link set enp25s0 down
+
