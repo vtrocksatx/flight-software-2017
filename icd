@@ -1,22 +1,21 @@
-command radio: 10.01.10.01/24
-payload radio: 10.01.10.10/24
+command radio: 10.101.10.10/24
+payload radio: 10.101.10.11/24
 
-bits in downlink packet (2048 total)
+FORMAT: bits in downlink packet (2048 total): purpose
 16: DL pkid
 16: UL pkid
--- byte boundary (start of data sent to cmd radio via UDP, port 1337)
+(byte boundary)
+-- start of 252-byte packet sent to cmd radio via UDP, port 1337 --
 2: packet type
-
-
-PACKET TYPES:
-bits 00: ADSB
-bits 01: AIS
-bits 10: Telemetry
-bits 11: Flavor of the week
+	PACKET TYPES:
+	00: ADSB
+	01: AIS
+	10: Telemetry
+	11: Flavor of the week
 
 00: ADSB
 6: message count
--- byte boundary
+(byte boundary)
 32: bitmap for message lengths (0=56,1=112)
 {56,112}*count: messages
 <padding out to 252 bytes>
