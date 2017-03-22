@@ -4,11 +4,10 @@
 # source ~/prefix/setup_env.sh && cd ~/rocksat/ && python2 manager.py
 # while true; do nc -lp 1337; done
 
-import os, threading
+import os
+from threading import Thread
 from datareporter import TCPDataReporter, UDPDataReporter
 from subprocess import Popen, PIPE
-from socket import socket, SOCK_STREAM, AF_INET
-from Queue import Queue
 
 def main():
     f = FlowGraphManager()
@@ -23,7 +22,7 @@ def main():
 class FlowGraphManager():
     def __init__(self):
         self.topblock = None
-        self.r = TCPDataReporter(("localhost", 1337))
+        self.r = UDPDataReporter(("localhost", 1337))
 
     def processinput(self):
         cmd = raw_input("PLD>> ").strip()
@@ -55,7 +54,7 @@ class FlowGraphManager():
         self.r.stop()
 
 
-class TopBlockThread(threading.Thread):
+class TopBlockThread(Thread):
     def _process_adsb(self, data):
         return "ADS-B RX {}".format(data.strip()[1:-1])
     def _process_ais(self, data):

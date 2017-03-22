@@ -5,7 +5,7 @@
 # while true; do nc -lp 1337; done
 
 from threading import Thread, Semaphore
-from socket import socket, SOCK_STREAM, AF_INET
+from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
 from Queue import Queue
 
 class DataReporter(Thread):
