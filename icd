@@ -1,11 +1,19 @@
 command radio: 10.101.10.10/24
 payload radio: 10.101.10.11/24
 
-FORMAT: bits in downlink packet (2048 total): purpose
-16: DL pkid
-16: UL pkid
-(byte boundary)
--- start of 252-byte packet sent to cmd radio via UDP, port 1337 --
+command protocol
+-- case insensitive, newline separated, sent to payload radio on TCP port 2600 --
+[FORMAT: ascii command string: command function]
+adsb: start adsb decoder
+ais: start ais decoder
+testmode: start non-gnuradio testing data source
+stop: stop active decoder
+quit: terminate and restart payload server
+exit: see quit
+
+data reporting protocol
+-- start of 252-byte packet sent to cmd radio on UDP port 1337 --
+[FORMAT: bits in downlink packet (2048 total): purpose]
 2: packet type
 	PACKET TYPES:
 	00: ADSB

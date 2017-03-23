@@ -1,8 +1,10 @@
+#!/usr/bin/env python2
+
 # this manages the currently running flow graph
 # future: receive commands from network
 
 # source ~/prefix/setup_env.sh && cd ~/rocksat/ && python2 manager.py
-# while true; do nc -lp 1337; done
+# nc -ulp 1337
 
 import os
 from threading import Thread
@@ -25,10 +27,10 @@ class FlowGraphManager():
         self.r = UDPDataReporter(("localhost", 1337))
 
     def processinput(self):
-        cmd = raw_input("PLD>> ").strip()
+        cmd = raw_input("PLD>> ").strip().lower()
         self.r.checkfailure()
-        if cmd == "start":
-            self.start("testmode")
+        if cmd in TopBlockThread.mode_handlers.keys():
+            self.start(cmd)
         elif cmd == "stop":
             self.stop()
         elif cmd in ["quit", "exit"]:
@@ -76,7 +78,6 @@ class TopBlockThread(Thread):
     def run(self):
         self.p = Popen("{}/top_block.py".format(self.mode), stdout=PIPE)
         try:
-            print("load")
             while 1:
                 line = self.p.stdout.readline()
                 if not line: # process finished
