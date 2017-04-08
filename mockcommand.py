@@ -4,19 +4,26 @@ import time
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM, timeout
 from threading import Thread
 
+def hexchunks(data, n):
+    chunks = [data[i:i+n] for i in range(0, len(data), n)]
+    return [c.encode("hex") for c in chunks]
+
 class DataListener(Thread):
     def run(self):
         self.s = socket(AF_INET, SOCK_DGRAM)
         self.s.bind(("localhost", 1337))
         self.s.settimeout(1)
         self._exit = False
-        while not self._exit:
-            try:
-                d = self.s.recvfrom(252)
-            except timeout:
-                continue
-            print(d[0])
-        self.s.close()
+        try:
+            while not self._exit:
+                try:
+                    d = self.s.recvfrom(252)
+                except timeout:
+                    continue
+                print("DataListener received:")
+                print("\n".join(["    "+c for c in hexchunks("\xff"*4+d[0], 32)]))
+        finally:
+            self.s.close()
 
     def stop(self):
         self._exit = True

@@ -4,7 +4,8 @@
 # future: receive commands from network
 
 # source ~/prefix/setup_env.sh && cd ~/rocksat/ && python2 manager.py
-# nc -ulp 1337
+# nc -lp2600 | ./payload.py
+# ./mockcommand.py
 
 import os
 from threading import Thread
@@ -57,14 +58,18 @@ class FlowGraphManager():
 
 
 class TopBlockThread(Thread):
+    def _pad_msg(self, data):
+        return data.ljust(self.r.max_msg_len, "\0")
     def _process_adsb(self, data):
-        return "ADS-B RX {}".format(data.strip()[1:-1])
+        return self._pad_msg("ADS-B RX {}".format(data.strip()[1:-1]))
     def _process_ais(self, data):
         raise NotImplementedError("no AIS data formatter yet")
+    def _process_test(self, data):
+        return self._pad_msg(data.strip())
     mode_handlers = {
             "adsb":     _process_adsb,
             "ais":      _process_ais,
-            "testmode": lambda data: data.strip(),
+            "testmode": _process_test,
     }
 
     def __init__(self, mode, r):
@@ -82,7 +87,7 @@ class TopBlockThread(Thread):
                 line = self.p.stdout.readline()
                 if not line: # process finished
                     break
-                msg = self.mode_handlers[self.mode](line)
+                msg = self.mode_handlers[self.mode](self, line)
                 print(msg)
                 self.r.send(msg)
         finally:

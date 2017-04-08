@@ -38,10 +38,9 @@ class DataReporter(Thread):
     def _checkmsg(self, msg):
         if not isinstance(msg, str):
             raise ValueError("only send strings")
-        # FIXME uncomment this once the formatters are done
-        #if len(msg) != self.max_msg_len:
-        #    raise ValueError("messages was {} instead of {} bytes"
-        #            "".format(len(msg) self.max_msg_len))
+        if len(msg) != self.max_msg_len:
+            raise ValueError("messages was {} instead of {} bytes"
+                    "".format(len(msg), self.max_msg_len))
 
 class UDPDataReporter(DataReporter):
     def run(self):
