@@ -1,35 +1,46 @@
-First do this (skip "Preparation from Source" section including subsections):
-https://kb.ettus.com/Software_Development_on_the_E310_and_E312#Preparation_using_PyBOMBS
-Don't worry about "Compiling and installing UHD" because pybombs does this.
-
----------- NOTE!
-Remember to always run the following before compiling anything:
-source ~/prefix/setup_env.sh
-source ~/prefix/environment-setup-armv7ahf-vfp-neon-oe-linux-gnueabi
+----------
+Flash e310 sd card:
+wget http://files.ettus.com/e3xx_images/e310-release-002/sdimage-gnuradio-dev.direct.xz
+xz -d sdimage-gnuradio-dev.direct.xz
+sudo dd if=sdimage-gnuradio-dev.direct of=/dev/mmcblk0
 
 ----------
-For ADSB:
-cd ~/prefix/src
-git clone https://github.com/bistromath/gr-air-modes.git
-mkdir gr-air-modes/build
-cd gr-air-modes/build
-cmake -DCMAKE_INSTALL_PREFIX=/usr -DENABLE_E300=ON ..
-make -j4
-make install DESTDIR=~/prefix
-rsync ~/prefix ...
+For ADSB (port RXA-2):
+.profile:
+export GIT_SSL_NO_VERIFY=true
+export PYTHONPATH=/usr/local/lib/python2.7/site-packages
+export LD_LIBRARY_PATH=/usr/local/lib
+
+date -s "Fri Apr  7 17:39:51 EDT 2017"
+git clone http://github.com/bistromath/gr-air-modes.git
+cd gr-air-modes/
+mkdir build
+cd build/
+cmake ..
+make
+make install
+ldconfig
+pip install pyzmq
+/usr/bin/uhd_images_downloader
+ln -s /usr/share/uhd/images/usrp_e310_fpga.bit /usr/share/uhd/images/usrp_e300_fpga.bit
+modes_rx -T9
 
 ----------
 To talk to the USRP via ethernet:
 sudo ip link set enp0s25 up
 sudo ip addr add 10.101.10.1/24 dev enp0s25
 sudo systemctl start dnsmasq
+sudo iptables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE
+sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i enp0s25 -o wlp3s0 -j ACCEPT
+sudo sysctl net.ipv4.ip_forward=1
 ssh root@10.101.10.11
 And in reverse:
 sudo systemctl stop dnsmasq
 sudo ip addr del 10.101.10.1/24 dev enp0s25
 sudo ip link set enp0s25 down
-
-----------
-TO RUN ON USRP:
-Run the commands from "Running the new UHD via sshfs"
+sudo iptables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE
+sudo iptables -D FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -D FORWARD -i enp0s25 -o wlp3s0 -j ACCEPT
+sudo sysctl net.ipv4.ip_forward=0
 
