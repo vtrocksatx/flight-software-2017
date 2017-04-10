@@ -71,17 +71,23 @@ class TopBlockThread(Thread):
             "ais":      _process_ais,
             "testmode": _process_test,
     }
+    mode_binaries = {
+            "adsb":     "modes_rx -T9",
+            "ais":      "ais/top_block.py",
+            "testmode": "testmode/top_block.py",
+    }
 
     def __init__(self, mode, r):
         super(TopBlockThread, self).__init__()
         self.mode = mode
         self.r = r
+        self.p = None
         if self.mode not in self.mode_handlers.keys():
             raise ValueError("TopBlockThread mode {} not supported, try {}".format(
                     self.mode, self.mode_handlers))
 
     def run(self):
-        self.p = Popen("{}/top_block.py".format(self.mode), stdout=PIPE)
+        self.p = Popen(self.mode_binaries[self.mode], stdout=PIPE)
         try:
             while 1:
                 line = self.p.stdout.readline()
@@ -94,7 +100,9 @@ class TopBlockThread(Thread):
             self.stop()
 
     def stop(self):
-        self.p.terminate()
+        if self.p:
+            self.p.terminate()
+            self.p = None
 
 
 if __name__ == "__main__":
