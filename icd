@@ -15,11 +15,8 @@ data reporting protocol
 -- start of 252-byte packet sent to cmd radio on UDP port 1337 --
 [FORMAT: bits in downlink packet (2048 total): purpose]
 2: packet type
-	PACKET TYPES:
-	00: ADSB
-	01: AIS
-	10: Telemetry
-	11: Flavor of the week
+
+PACKET TYPES:
 
 00: ADSB
 6: message count
@@ -31,8 +28,8 @@ data reporting protocol
 01: AIS
 TBD
 
-10: Telemetry
+10: Hardware telemetry
 (Zach)
 
-11: Flavor of the week
-?????
+11: Software telemetry
+(Marcus)

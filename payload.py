@@ -3,20 +3,25 @@
 # this manages the currently running flow graph
 # future: receive commands from network
 
-# source ~/prefix/setup_env.sh && cd ~/rocksat/ && python2 manager.py
+# nc -nlup1337
 # nc -lp2600 | ./payload.py
 # ./mockcommand.py
 
-import os
+import os, socket, time
 from threading import Thread
 from datareporter import TCPDataReporter, UDPDataReporter
 from subprocess import Popen, PIPE
 
 def main():
+    start = time.time()
+    t = lambda: time.time()-start
     f = FlowGraphManager()
     while 1:
+        # FIXME read input from socket instead
         try:
             f.processinput()
+        except socket.timeout:
+            raise NotImplementedError("comms failsafe under construction")
         except:
             f.destroy()
             raise
@@ -25,7 +30,7 @@ def main():
 class FlowGraphManager():
     def __init__(self):
         self.topblock = None
-        self.r = UDPDataReporter(("localhost", 1337))
+        self.r = UDPDataReporter(("10.101.10.1", 1337))
 
     def processinput(self):
         cmd = raw_input("PLD>> ").strip().lower()
@@ -61,7 +66,7 @@ class TopBlockThread(Thread):
     def _pad_msg(self, data):
         return data.ljust(self.r.max_msg_len, "\0")
     def _process_adsb(self, data):
-        return self._pad_msg("ADS-B RX {}".format(data.strip()[1:-1]))
+        return self._pad_msg("ADS-B RX {}\n".format(data.strip().split()[0]))
     def _process_ais(self, data):
         raise NotImplementedError("no AIS data formatter yet")
     def _process_test(self, data):
@@ -72,7 +77,7 @@ class TopBlockThread(Thread):
             "testmode": _process_test,
     }
     mode_binaries = {
-            "adsb":     "modes_rx -T9",
+            "adsb":     os.path.join(os.path.dirname(__file__), "modes_rx"),
             "ais":      "ais/top_block.py",
             "testmode": "testmode/top_block.py",
     }
@@ -89,15 +94,28 @@ class TopBlockThread(Thread):
     def run(self):
         self.p = Popen(self.mode_binaries[self.mode], stdout=PIPE)
         try:
+            self._wait_for_load()
             while 1:
                 line = self.p.stdout.readline()
                 if not line: # process finished
                     break
                 msg = self.mode_handlers[self.mode](self, line)
-                print(msg)
                 self.r.send(msg)
         finally:
             self.stop()
+
+    def _wait_for_load(self):
+        if self.mode == "adsb":
+            trace = ""
+            while 1:
+                line = self.p.stdout.readline()
+                if not line:
+                    raise IOError("failed to load {}, output so far:\n{}".format(self.mode, trace))
+                if line.startswith("Using Volk machine: "):
+                    #next line will be actual data
+                    return
+                trace += line
+
 
     def stop(self):
         if self.p:
