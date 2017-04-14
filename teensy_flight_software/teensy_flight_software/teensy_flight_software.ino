@@ -46,8 +46,9 @@ File sd_file;
 
 void setup() {
   delay(2000);
-  Serial.begin(9600);
+  Serial.begin(9600); // Initialize USB serial (Teensy ignores the specified baud rate and sets it to the USB data rate)
   delay(1000);
+  Serial1.begin(9600);  // Initialize RS232 output
   Wire.begin();
   SD.begin(); 
 
@@ -84,6 +85,8 @@ void loop() {
     getMPL3115();
     Serial.print("\n");
     sd_file.print("\n");
+
+    Serial1.println("It works!");
   }
 }
 
