@@ -13,6 +13,7 @@ SDA           SDA (20)
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <SD.h>
 
 #define TMP102_I2C_ADDRESS 72 /* This is the I2C address for our chip.
 This value is correct if you tie the ADD0 pin to ground. See the datasheet for some other values. */
@@ -58,18 +59,25 @@ bool blinkState = false;
 unsigned long period;
 unsigned long counter;
 
+// SD card file
+File sd_file;
+
 void setup() {
   delay(2000);
   Serial.begin(9600);
   delay(1000);
-  Serial.print("Nothing broken yet");
+  //Serial.print("Nothing broken yet");
   // part of set up for MPU6050
   // join I2C bus (I2Cdev library doesn't do this automatically)
 //  #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
       Wire.begin();
+      SD.begin();
 //  #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
 //     Fastwire::setup(400, true);
 //  #endif  
+
+  // set up sd card writes
+  sd_file = SD.open("sensorTelemetry.txt", FILE_WRITE);
   
   // set up ADXL193
   pinMode(A0, INPUT);
@@ -85,7 +93,7 @@ void setup() {
   enableEventFlags(); // Enable all three pressure and temp event flags   <- Necessary?
 
   // print initial table format
-  Serial.print("CoarseAccel\t\tax\t\tay\t\taz\t\tgx\t\tgy\t\tgz\t\ttemp\tpress\tMPLtemp");
+  //Serial.print("CoarseAccel\t\tax\t\tay\t\taz\t\tgx\t\tgy\t\tgz\t\ttemp\tpress\tMPLtemp");
 
   // Start the timer
   period = 100;
@@ -97,10 +105,13 @@ void loop() {
   {
     // put your main code here, to run repeatedly:
     counter = millis();
+    sd_file.print("$")
     getADXL193();
     getMPU6050();
-    getTemp102();  
-    Serial.print('\n');
+    getTemp102();
+    getMPL3115()
+    Serial.print("\n");
+    sd_file.print("\n");
   }
 }
 
@@ -108,16 +119,25 @@ void loop() {
  * Helper functions for various sensors
  */
 
+void print(//what goes here?) {
+  sd_file.print();
+  Serial.print();
+  //somehow send to usb
+}
+
 /* ----------- ADXL Helpers ----------------------*/
 void getADXL193() {
   rawValueADXL = analogRead(A0);
   
   // Convert values if necessary
   convertedValueADXL = (rawValueADXL / 1023.0) * 250 - 125;
+
+  // Convert to a string
   
   // Output to console in parsable format
   //Serial.print("Value in Gs: ");
-  Serial.print(convertedValueADXL); Serial.print("\t\t");
+  Serial.print(convertedValueADXL); Serial.print(",");
+  sd_file.print(convertedValueADXL); sd_file.print(",");
 }
 
 /* ----------- MPU Helpers -----------------------*/
@@ -129,12 +149,18 @@ void getMPU6050() {
   #ifdef OUTPUT_READABLE_ACCELGYRO
     // display tab-separated accel/gyro x/y/z values
     //Serial.print("a/g:\t");
-    Serial.print(ax); Serial.print("\t\t");
-    Serial.print(ay); Serial.print("\t\t");
-    Serial.print(az); Serial.print("\t\t");
-    Serial.print(gx); Serial.print("\t\t");
-    Serial.print(gy); Serial.print("\t\t");
-    Serial.print(gz); Serial.print("\t\t");
+    Serial.print(ax); Serial.print(",");
+    Serial.print(ay); Serial.print(",");
+    Serial.print(az); Serial.print(",");
+    Serial.print(gx); Serial.print(",");
+    Serial.print(gy); Serial.print(",");
+    Serial.print(gz); Serial.print(",");
+    sd_file.print(ax); sd_file.print(",");
+    sd_file.print(ay); sd_file.print(",");
+    sd_file.print(az); sd_file.print(",");
+    sd_file.print(gx); sd_file.print(",");
+    sd_file.print(gy); sd_file.print(",");
+    sd_file.print(gz); sd_file.print(",");
   #endif
   #ifdef OUTPUT_BINARY_ACCELGYRO
     Serial.write((uint8_t)(ax >> 8)); Serial.write((uint8_t)(ax & 0xFF));
@@ -199,7 +225,8 @@ the sensor is capable of alerting you if the temperature is above or below a spe
 //  Serial.println(val*0.0625);
 //  Serial.print("Corrected temp is ");
 //  Serial.print("\t");
-  Serial.print(correctedtemp); Serial.print("\t\t");
+  Serial.print(correctedtemp); Serial.print(",");
+  sd_file.print(correctedtemp); sd_file.print(",");
 }
 
 /*--------- MPL 3115 Helpers --------------------*/
@@ -207,7 +234,9 @@ void getMPL3115()
 {
   float pressure = readPressure();
   float temperature = readTemp();
-  Serial.print(pressure); Serial.print("\t\t");
-  Serial.print(temperature); Serial.print("\t\t");
+  Serial.print(pressure); Serial.print(",");
+  Serial.print(temperature); Serial.print(",");
+  sd_file.print(pressure); sd_file.print(",");
+  sd_file.print(temperature); sd_file.print(",");
 }
 
