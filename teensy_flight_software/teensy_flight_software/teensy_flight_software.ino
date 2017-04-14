@@ -46,7 +46,7 @@ File sd_file;
 
 void setup() {
   delay(2000);
-  Serial.begin();
+  Serial.begin(9600);
   delay(1000);
   Wire.begin();
   SD.begin(); 
@@ -77,11 +77,11 @@ void loop() {
   {
     // put your main code here, to run repeatedly:
     counter = millis();
-    sd_file.print("$")
+    sd_file.print("$");
     getADXL193();
     getMPU6050();
     getTemp102();
-    getMPL3115()
+    getMPL3115();
     Serial.print("\n");
     sd_file.print("\n");
   }
@@ -90,12 +90,12 @@ void loop() {
 /*
  * Helper functions for various sensors
  */
-
+/*
 void print(//what goes here?) {
   sd_file.print();
   Serial.print();
   //somehow send to usb
-}
+}*/
 
 /* ----------- ADXL Helpers ----------------------*/
 void getADXL193() {
