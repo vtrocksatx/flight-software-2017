@@ -72,7 +72,7 @@ void setup() {
 //  #endif  
   
   // set up ADXL193
-  pinMode(A0, INPUT);
+  pinMode(A14, INPUT);
   
   // set up MPU6050
   accelgyro.initialize();
@@ -88,7 +88,7 @@ void setup() {
   Serial.print("CoarseAccel\t\tax\t\tay\t\taz\t\tgx\t\tgy\t\tgz\t\ttemp\tpress\tMPLtemp");
 
   // Start the timer
-  period = 100;
+  period = 200;
   counter = 0;
 }
 
@@ -99,7 +99,8 @@ void loop() {
     counter = millis();
     getADXL193();
     getMPU6050();
-    getTemp102();  
+    getTemp102(); 
+    getMPL3115(); 
     Serial.print('\n');
   }
 }
@@ -110,13 +111,12 @@ void loop() {
 
 /* ----------- ADXL Helpers ----------------------*/
 void getADXL193() {
-  rawValueADXL = analogRead(A0);
+  rawValueADXL = analogRead(A14);
   
   // Convert values if necessary
   convertedValueADXL = (rawValueADXL / 1023.0) * 250 - 125;
   
-  // Output to console in parsable format
-  //Serial.print("Value in Gs: ");
+  // Output in Gs
   Serial.print(convertedValueADXL); Serial.print("\t\t");
 }
 
@@ -184,21 +184,6 @@ the sensor is capable of alerting you if the temperature is above or below a spe
   correctedtemp = convertedtemp - 5; 
   /* See the above note on overreading */
 
-
-//  Serial.print("firstbyte is ");
-//  Serial.print("\t");
-//  Serial.println(firstbyte, BIN);
-//  Serial.print("secondbyte is ");
-//  Serial.print("\t");
-//  Serial.println(secondbyte, BIN);
-//  Serial.print("Concatenated byte is ");
-//  Serial.print("\t");
-//  Serial.println(val, BIN);
-//  Serial.print("Converted temp is ");
-//  Serial.print("\t");
-//  Serial.println(val*0.0625);
-//  Serial.print("Corrected temp is ");
-//  Serial.print("\t");
   Serial.print(correctedtemp); Serial.print("\t\t");
 }
 
