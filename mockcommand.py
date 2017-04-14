@@ -11,7 +11,7 @@ def hexchunks(data, n):
 class DataListener(Thread):
     def run(self):
         self.s = socket(AF_INET, SOCK_DGRAM)
-        self.s.bind(("localhost", 1337))
+        self.s.bind(("0.0.0.0", 1337))
         self.s.settimeout(1)
         self._exit = False
         try:
@@ -30,13 +30,11 @@ class DataListener(Thread):
 
 def drivetest():
     s = socket(AF_INET, SOCK_STREAM)
-    s.connect(("", 2600))
-    s.send("testmode\n")
-    time.sleep(3)
+    s.connect(("10.101.10.11", 2600))
     s.send("adsb\n")
-    time.sleep(3)
+    time.sleep(10)
     s.send("testmode\n")
-    time.sleep(3)
+    time.sleep(10)
     s.send("exit\n")
     s.close()
 
