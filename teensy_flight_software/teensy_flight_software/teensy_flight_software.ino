@@ -11,9 +11,7 @@ SDA           SDA (20)
 
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <SD.h>
+#include <SdFat.h>
 
 #define TMP102_I2C_ADDRESS 72 /* This is the I2C address for our chip.
 This value is correct if you tie the ADD0 pin to ground. See the datasheet for some other values. */
@@ -41,8 +39,9 @@ bool blinkState = false;
 unsigned long period;
 unsigned long counter;
 
-// SD card file
+// SD card file and SD object
 File sd_file;
+SdFatSdioEX SD;
 
 void setup() {
   delay(2000);
@@ -79,6 +78,7 @@ void loop() {
     // put your main code here, to run repeatedly:
     counter = millis();
     sd_file.print("$");
+    Serial.print("$");
     getADXL193();
     getMPU6050();
     getTemp102();
@@ -87,6 +87,13 @@ void loop() {
     sd_file.print("\n");
 
     Serial1.println("It works!");
+
+    // TODO: REMOVE BEFORE FLIGHT!!!!!!!!!!
+    if(millis() > 20000)
+    {
+      sd_file.close();
+      while(1);
+    }
   }
 }
 
