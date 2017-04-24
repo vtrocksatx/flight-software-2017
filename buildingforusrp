@@ -28,7 +28,7 @@ modes_rx -T9
 ----------
 To talk to the USRP via ethernet:
 sudo ip link set enp0s25 up
-sudo ip addr add 10.101.10.1/24 dev enp0s25
+sudo ip addr add 10.101.10.10/24 dev enp0s25
 sudo systemctl start dnsmasq
 sudo iptables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE
 sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT

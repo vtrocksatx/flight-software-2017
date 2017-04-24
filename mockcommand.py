@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import time
+import time, traceback, sys
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM, timeout
 from threading import Thread
 
@@ -28,20 +28,27 @@ class DataListener(Thread):
     def stop(self):
         self._exit = True
 
-def drivetest():
-    s = socket(AF_INET, SOCK_STREAM)
-    #s.connect(("10.101.10.11", 2600))
-    s.connect(("localhost", 2600))
-    s.send("testmode\n")
-    time.sleep(10)
-    s.send("exit\n")
-    s.close()
+def drivetest(targetip):
+    while 1:
+        try:
+            s = socket(AF_INET, SOCK_STREAM)
+            s.connect((targetip, 2600))
+            s.send("testmode\n")
+            time.sleep(10)
+            s.send("exit\n")
+        except Exception as e:
+            traceback.print_exc()
+            print("trying again in 3 seconds...")
+            time.sleep(3)
+        finally:
+            s.close()
 
 if __name__ == "__main__":
+    targetip = sys.argv[1] if len(sys.argv)>1 else "10.101.10.11"
     t = DataListener()
     t.start()
     try:
-        drivetest()
+        drivetest(targetip)
     finally:
         t.stop()
         t.join()

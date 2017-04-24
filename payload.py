@@ -3,11 +3,10 @@
 # this manages the currently running flow graph
 # future: receive commands from network
 
-# nc -nlup1337
-# nc -lp2600 | ./payload.py
-# ./mockcommand.py
+# ./payload.py
+# ./mockcommand.py 127.0.0.1
 
-import os, socket, time, struct
+import sys, os, socket, time, struct, traceback
 from threading import Thread
 from datareporter import TCPDataReporter, UDPDataReporter
 from subprocess import Popen, PIPE
@@ -15,34 +14,54 @@ from subprocess import Popen, PIPE
 def main():
     start = time.time()
     t = lambda: time.time()-start
-    f = FlowGraphManager()
-    while 1:
-        # FIXME read input from socket instead
+
+    while 1: # this loop repeats for every new connection
         try:
-            f.processinput()
-        except socket.timeout:
-            raise NotImplementedError("comms failsafe under construction")
-        except:
+            # we completely tear down and recreate the socket every time in case of weirdness
+            print("listening for new command connection...")
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(("0.0.0.0", 2600))
+            s.listen(1)
+            c, info = s.accept()
+            print("command connection received from {}".format(info))
+            f = FlowGraphManager(info[0])
+            while 1:
+                cmd = c.recv(1024).strip()
+                if not cmd:
+                    raise IOError("command protocol error: empty command")
+                f.processinput(cmd)
+
+        except f.Quit:
+            print("payload processor restarted by command")
+
+        except Exception as e:
+            traceback.print_exc()
+
+        finally:
             f.destroy()
-            raise
+            if 'c' in locals().keys():
+                c.close()
+            s.close()
+
 
 
 class FlowGraphManager():
-    def __init__(self):
-        self.topblock = None
-        #self.r = UDPDataReporter(("10.101.10.1", 1337))
-        self.r = UDPDataReporter(("localhost", 1337))
+    class Quit(IOError): pass # used to signal a shutdown requested by command
 
-    def processinput(self):
-        cmd = raw_input("PLD>> ").strip().lower()
+    def __init__(self, datatarget):
+        self.topblock = None
+        self.r = UDPDataReporter((datatarget, 1337))
+
+    def processinput(self, cmd):
+        cmd = cmd.strip().lower()
         self.r.checkfailure()
         if cmd in TopBlockThread.mode_handlers.keys():
             self.start(cmd)
         elif cmd == "stop":
             self.stop()
         elif cmd in ["quit", "exit"]:
-            self.destroy()
-            exit(0)
+            raise self.Quit(cmd)
         else:
             print("unrecognized command: '{}'".format(cmd))
 
@@ -83,15 +102,16 @@ class TopBlockThread(Thread):
         return data.strip()
 
 
-    mode_handlers = {
-            "adsb":     _process_adsb,
-            "ais":      _process_ais,
-            "testmode": _process_adsb,
-    }
     mode_binaries = {
+            #I used the full path for adsb because we modified the stock modes_rx
             "adsb":     os.path.join(os.path.dirname(__file__), "modes_rx"),
             "ais":      "ais/top_block.py",
             "testmode": "testmode/top_block.py",
+    }
+    mode_handlers = {
+            "adsb":     _process_adsb,
+            "ais":      _process_ais,
+            "testmode": _process_adsb, # use testing data to exercise adsb packer
     }
 
     def __init__(self, mode, r):
