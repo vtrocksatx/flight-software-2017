@@ -22,6 +22,7 @@ def main():
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(("0.0.0.0", 2600))
+            # we only handle a single connection at a time, so this isn't in its own thread
             s.listen(1)
             c, info = s.accept()
             print("command connection received from {}".format(info))
@@ -39,10 +40,12 @@ def main():
             traceback.print_exc()
 
         finally:
-            f.destroy()
+            if 'f' in locals().keys():
+                f.destroy()
             if 'c' in locals().keys():
                 c.close()
             s.close()
+            time.sleep(1) # limit cpu usage in case of repeated errors setting up connection
 
 
 
