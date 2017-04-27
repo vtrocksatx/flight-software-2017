@@ -33,15 +33,17 @@ def drivetest(targetip):
         try:
             s = socket(AF_INET, SOCK_STREAM)
             s.connect((targetip, 2600))
-            s.send("testmode\n")
-            time.sleep(10)
+            print("connected, starting data collection")
+            s.send("adsb\n")
+            time.sleep(30)
             s.send("exit\n")
+            print("restarting payload")
         except Exception as e:
             traceback.print_exc()
-            print("trying again in 3 seconds...")
-            time.sleep(3)
         finally:
             s.close()
+            print("starting again in 2 seconds...")
+            time.sleep(2)
 
 if __name__ == "__main__":
     targetip = sys.argv[1] if len(sys.argv)>1 else "10.101.10.11"

@@ -37,7 +37,7 @@ sudo sysctl net.ipv4.ip_forward=1
 ssh root@10.101.10.11
 And in reverse:
 sudo systemctl stop dnsmasq
-sudo ip addr del 10.101.10.1/24 dev enp0s25
+sudo ip addr del 10.101.10.10/24 dev enp0s25
 sudo ip link set enp0s25 down
 sudo iptables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE
 sudo iptables -D FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
