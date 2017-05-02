@@ -7,7 +7,7 @@ sudo dd if=sdimage-gnuradio-dev.direct of=/dev/mmcblk0
 ----------
 For ADSB (port RX2-A):
 .profile:
-export GIT_SSL_NO_VERIFY=true
+export GIT_SSL_NO_VERIFY=true #problems with missing CA certs on the e310 fw
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages
 export LD_LIBRARY_PATH=/usr/local/lib
 
@@ -23,7 +23,18 @@ ldconfig
 pip install pyzmq
 /usr/bin/uhd_images_downloader
 ln -s /usr/share/uhd/images/usrp_e310_fpga.bit /usr/share/uhd/images/usrp_e300_fpga.bit
-modes_rx -T9
+modes_rx -T9 # now replaced with our own modes_rx script
+
+----------
+For AIS (port RX2-B?):
+git clone https://github.com/bistromath/gr-ais
+cd gr-ais/
+mkdir build
+cd build/
+cmake ..
+make
+make install
+ldconfig
 
 ----------
 To talk to the USRP via ethernet:
