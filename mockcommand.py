@@ -30,9 +30,8 @@ class DataListener(Thread):
 
 def drivetest():
     s = socket(AF_INET, SOCK_STREAM)
-    s.connect(("10.101.10.11", 2600))
-    s.send("adsb\n")
-    time.sleep(10)
+    #s.connect(("10.101.10.11", 2600))
+    s.connect(("localhost", 2600))
     s.send("testmode\n")
     time.sleep(10)
     s.send("exit\n")
