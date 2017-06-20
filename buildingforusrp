@@ -7,7 +7,7 @@ sudo dd if=sdimage-gnuradio-dev.direct of=/dev/mmcblk0
 ----------
 For ADSB (port RX2-A):
 .profile:
-export GIT_SSL_NO_VERIFY=true
+export GIT_SSL_NO_VERIFY=true #problems with missing CA certs on the e310 fw
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages
 export LD_LIBRARY_PATH=/usr/local/lib
 
@@ -23,12 +23,23 @@ ldconfig
 pip install pyzmq
 /usr/bin/uhd_images_downloader
 ln -s /usr/share/uhd/images/usrp_e310_fpga.bit /usr/share/uhd/images/usrp_e300_fpga.bit
-modes_rx -T9
+modes_rx -T9 # now replaced with our own modes_rx script
+
+----------
+For AIS (port RX2-B?):
+git clone https://github.com/bistromath/gr-ais
+cd gr-ais/
+mkdir build
+cd build/
+cmake ..
+make
+make install
+ldconfig
 
 ----------
 To talk to the USRP via ethernet:
 sudo ip link set enp0s25 up
-sudo ip addr add 10.101.10.1/24 dev enp0s25
+sudo ip addr add 10.101.10.10/24 dev enp0s25
 sudo systemctl start dnsmasq
 sudo iptables -t nat -A POSTROUTING -o wlp3s0 -j MASQUERADE
 sudo iptables -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
@@ -37,7 +48,7 @@ sudo sysctl net.ipv4.ip_forward=1
 ssh root@10.101.10.11
 And in reverse:
 sudo systemctl stop dnsmasq
-sudo ip addr del 10.101.10.1/24 dev enp0s25
+sudo ip addr del 10.101.10.10/24 dev enp0s25
 sudo ip link set enp0s25 down
 sudo iptables -t nat -D POSTROUTING -o wlp3s0 -j MASQUERADE
 sudo iptables -D FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
